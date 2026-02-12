@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  hello_tx:
+    image: local/hello_tx:1
+    deploy:
+      replicas: 1
+  hello_rx:
+    image: local/hello_rx:1
+    deploy:
+      replicas: 1
+  hello_tx2:
+    image: local/hello_tx2:1
+    deploy:
+      replicas: 1
+  hello_rx2:
+    image: local/hello_rx2:1
+    deploy:
+      replicas: 1
