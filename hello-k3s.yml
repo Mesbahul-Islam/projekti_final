@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-task1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-task1
+  template:
+    metadata:
+      labels:
+        app: hello-task1
+    spec:
+      containers:
+      - name: task1
+        image: local/task1
+        imagePullPolicy: IfNotPresent
+        command: ["python", "hello_tx.py"]
+        workingDir: /app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-task2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-task2
+  template:
+    metadata:
+      labels:
+        app: hello-task2
+    spec:
+      containers:
+      - name: task2
+        image: local/task2
+        imagePullPolicy: IfNotPresent
+        command: ["python", "hello_rx.py"]
+        workingDir: /app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-task3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-task3
+  template:
+    metadata:
+      labels:
+        app: hello-task3
+    spec:
+      containers:
+      - name: task3
+        image: local/task3
+        imagePullPolicy: IfNotPresent
+        command: ["python", "hello_tx2.py"]
+        workingDir: /app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-task4
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-task4
+  template:
+    metadata:
+      labels:
+        app: hello-task4
+    spec:
+      containers:
+      - name: task4
+        image: local/task4
+        imagePullPolicy: IfNotPresent
+        command: ["python", "hello_rx2.py"]
+        workingDir: /app

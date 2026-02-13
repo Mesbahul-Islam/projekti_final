@@ -1,12 +1,12 @@
 #!/bin/bash
 
-echo "Resetting Docker setup..."
+echo "Resetting k3s setup..."
 
-# Remove the stack
-docker stack rm hello
-sleep 10  # Wait for stack removal
+# Remove the deployments
+kubectl delete -f hello-k3s.yml
+sleep 10  # Wait for removal
 
-# Stop and remove all containers
+# Stop and remove all containers (if any)
 docker stop $(docker ps -q) || true
 docker rm $(docker ps -aq) || true
 
@@ -22,6 +22,6 @@ docker build -t local/task3 hello_tx2/
 docker build -t local/task4 hello_rx2/
 
 # Deploy the stack
-docker stack deploy -c hello-stack.yml hello
+kubectl apply -f hello-k3s.yml
 
 echo "Restart complete."
