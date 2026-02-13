@@ -23,24 +23,24 @@ services:
         condition: any
         delay: 5s
         max_attempts: 0
-  hello_tx:
-    image: local/hello_tx:1
-    hostname: hello_tx
+  task1:
+    image: local/task1:1
+    hostname: task1
     deploy:
       replicas: 1
-  hello_rx:
-    image: local/hello_rx:1
-    hostname: hello_rx
+  task2:
+    image: local/task2:1
+    hostname: task2
     deploy:
       replicas: 1
-  hello_tx2:
-    image: local/hello_tx2:1
-    hostname: hello_tx2
+  task3:
+    image: local/task3:1
+    hostname: task3
     deploy:
       replicas: 1
-  hello_rx2:
-    image: local/hello_rx2:1
-    hostname: hello_rx2
+  task4:
+    image: local/task4:1
+    hostname: task4
     deploy:
       replicas: 1
 

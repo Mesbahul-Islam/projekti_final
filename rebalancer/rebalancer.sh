@@ -49,39 +49,43 @@ while true; do
   services="$(list_stack_services)"
   echo "[debug] checking services: $services"
 
-  # Compute node counts
-  unset node_counts
-  declare -A node_counts
+  # Get nodes
+  node1=$(docker node ls --format '{{.Hostname}}' | head -1)
+  node2=$(docker node ls --format '{{.Hostname}}' | tail -1)
+
+  # Count services per node
+  count1=0
+  count2=0
   for svc in $services; do
     node=$(get_service_node "$svc")
-    if [ -n "$node" ]; then
-      node_counts[$node]=$(( ${node_counts[$node]:-0} + 1 ))
+    if [ "$node" = "$node1" ]; then
+      count1=$((count1 + 1))
+    elif [ "$node" = "$node2" ]; then
+      count2=$((count2 + 1))
     fi
   done
 
-  # Find min and max counts
-  min_count=999
-  max_count=0
-  idle_node=""
-  busy_node=""
-  for node in "${!node_counts[@]}"; do
-    count=${node_counts[$node]}
-    if [ $count -lt $min_count ]; then
-      min_count=$count
-      idle_node=$node
-    fi
-    if [ $count -gt $max_count ]; then
-      max_count=$count
-      busy_node=$node
-    fi
-  done
+  echo "[debug] $node1: $count1, $node2: $count2"
 
-  if [ $min_count -eq 0 ] && [ $max_count -gt 1 ]; then
+  # Check for imbalance
+  if [ $count1 -eq 0 ] && [ $count2 -gt 1 ]; then
+    idle_node=$node1
+    busy_node=$node2
+    busy_count=$count2
+  elif [ $count2 -eq 0 ] && [ $count1 -gt 1 ]; then
+    idle_node=$node2
+    busy_node=$node1
+    busy_count=$count1
+  else
+    idle_node=""
+  fi
+
+  if [ -n "$idle_node" ]; then
     # Find a service on busy_node to move
     for svc in $services; do
       if [ "$(get_service_node "$svc")" = "$busy_node" ]; then
         if should_update "$svc"; then
-          echo "[rebalancer] imbalance: $busy_node has $max_count, $idle_node has $min_count -> moving $svc to $idle_node"
+          echo "[rebalancer] imbalance: $busy_node has $busy_count, $idle_node has 0 -> moving $svc to $idle_node"
           docker service update --constraint "node.hostname == $idle_node" "$svc" >/dev/null 2>&1 || true
         else
           echo "[rebalancer] imbalance detected but $svc in cooldown"
@@ -89,8 +93,6 @@ while true; do
         break
       fi
     done
-  else
-    echo "[debug] balance ok: min=$min_count max=$max_count"
   fi
 
   sleep "$POLL_SECONDS"
