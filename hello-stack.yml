@@ -24,22 +24,22 @@ services:
         delay: 5s
         max_attempts: 0
   task1:
-    image: local/task1:1
+    image: local/task1
     hostname: task1
     deploy:
       replicas: 1
   task2:
-    image: local/task2:1
+    image: local/task2
     hostname: task2
     deploy:
       replicas: 1
   task3:
-    image: local/task3:1
+    image: local/task3
     hostname: task3
     deploy:
       replicas: 1
   task4:
-    image: local/task4:1
+    image: local/task4
     hostname: task4
     deploy:
       replicas: 1

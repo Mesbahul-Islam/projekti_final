@@ -87,10 +87,10 @@ while true; do
         if should_update "$svc"; then
           echo "[rebalancer] imbalance: $busy_node has $busy_count, $idle_node has 0 -> moving $svc to $idle_node"
           docker service update --constraint "node.hostname == $idle_node" "$svc" >/dev/null 2>&1 || true
+          break
         else
           echo "[rebalancer] imbalance detected but $svc in cooldown"
         fi
-        break
       fi
     done
   fi
