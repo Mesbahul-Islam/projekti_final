@@ -25,18 +25,22 @@ services:
         max_attempts: 0
   hello_tx:
     image: local/hello_tx:1
+    hostname: hello_tx
     deploy:
       replicas: 1
   hello_rx:
     image: local/hello_rx:1
+    hostname: hello_rx
     deploy:
       replicas: 1
   hello_tx2:
     image: local/hello_tx2:1
+    hostname: hello_tx2
     deploy:
       replicas: 1
   hello_rx2:
     image: local/hello_rx2:1
+    hostname: hello_rx2
     deploy:
       replicas: 1
 

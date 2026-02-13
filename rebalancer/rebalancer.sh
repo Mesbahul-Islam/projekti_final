@@ -17,15 +17,18 @@ should_update() {
 
   if [ ! -f "$stamp" ]; then
     echo "$now" > "$stamp"
+    echo "[debug] updating $svc (first time)"
     return 0
   fi
 
   last="$(cat "$stamp" 2>/dev/null || echo 0)"
   if [ $((now - last)) -ge "$COOLDOWN_SECONDS" ]; then
     echo "$now" > "$stamp"
+    echo "[debug] updating $svc (cooldown expired)"
     return 0
   fi
 
+  echo "[debug] $svc in cooldown"
   return 1
 }
 
@@ -47,15 +50,19 @@ echo "[rebalancer] stack=$STACK_NAME poll=${POLL_SECONDS}s cooldown=${COOLDOWN_S
 
 while true; do
   services="$(list_stack_services)"
+  echo "[debug] checking services: $services"
 
   for svc in $services; do
     if service_has_failures "$svc"; then
+      echo "[debug] failures detected in $svc"
       if should_update "$svc"; then
         echo "[rebalancer] failures detected in $svc -> docker service update --force"
         docker service update --force "$svc" >/dev/null 2>&1 || true
       else
         echo "[rebalancer] failures detected in $svc but in cooldown"
       fi
+    else
+      echo "[debug] no failures in $svc"
     fi
   done
 
