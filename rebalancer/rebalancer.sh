@@ -20,13 +20,18 @@ log() {
   shift
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
   message="[$timestamp] [$level] $*"
-  echo "$message"
+  echo "$message" >&2
   echo "$message" >> "$LOG_FILE"
 }
 
 log_info()  { log "INFO"  "$@"; }
 log_debug() { log "DEBUG" "$@"; }
 log_warn()  { log "WARN"  "$@"; }
+
+clear_cooldowns() {
+  rm -f /tmp/rebalance_*.stamp 2>/dev/null
+  log_info "Cleared cooldown stamps"
+}
 
 # ============================================================================
 # Utility Functions
@@ -87,41 +92,6 @@ count_services_on_node() {
   echo "$count"
 }
 
-find_idle_and_busy_nodes() {
-  services="$1"
-  nodes="$2"
-  
-  idle_node=""
-  busy_node=""
-  max_count=0
-  
-  # Build distribution string for logging
-  distribution=""
-  
-  for node in $nodes; do
-    count=$(count_services_on_node "$services" "$node")
-    distribution="$distribution $node=$count"
-    
-    # Track idle node (0 services)
-    if [ "$count" -eq 0 ]; then
-      idle_node="$node"
-    fi
-    
-    # Track busiest node
-    if [ "$count" -gt "$max_count" ]; then
-      max_count="$count"
-      busy_node="$node"
-    fi
-  done
-  
-  log_debug "Distribution:$distribution"
-  
-  # Return result: idle_node busy_node max_count (or empty if no imbalance)
-  if [ -n "$idle_node" ] && [ "$max_count" -gt 1 ]; then
-    echo "$idle_node $busy_node $max_count"
-  fi
-}
-
 do_rebalance() {
   services=$(get_stack_services)
   nodes=$(get_swarm_nodes)
@@ -131,15 +101,30 @@ do_rebalance() {
   log_debug "Services: $services"
   log_debug "Nodes: $nodes"
   
-  # Find imbalance
-  result=$(find_idle_and_busy_nodes "$services" "$nodes")
-  [ -z "$result" ] && return
+  # Count services per node and find imbalance
+  idle_node=""
+  busy_node=""
+  max_count=0
+  distribution=""
   
-  idle_node=$(echo "$result" | awk '{print $1}')
-  busy_node=$(echo "$result" | awk '{print $2}')
-  busy_count=$(echo "$result" | awk '{print $3}')
+  for node in $nodes; do
+    count=$(count_services_on_node "$services" "$node")
+    distribution="$distribution $node=$count"
+    [ "$count" -eq 0 ] && idle_node="$node"
+    if [ "$count" -gt "$max_count" ]; then
+      max_count="$count"
+      busy_node="$node"
+    fi
+  done
   
-  log_info "Imbalance: $busy_node has $busy_count services, $idle_node has 0"
+  log_debug "Distribution:$distribution"
+  
+  # Check for imbalance: one node idle AND busiest has >1
+  if [ -z "$idle_node" ] || [ "$max_count" -le 1 ]; then
+    return
+  fi
+  
+  log_info "Imbalance: $busy_node has $max_count services, $idle_node has 0"
   
   # Force redistribute ONE service not in cooldown
   for svc in $services; do
@@ -159,6 +144,7 @@ do_rebalance() {
 # ============================================================================
 # Main
 # ============================================================================
+clear_cooldowns
 log_info "Rebalancer started: stack=$STACK_NAME poll=${POLL_SECONDS}s cooldown=${COOLDOWN_SECONDS}s"
 log_info "Log file: $LOG_FILE"
 
