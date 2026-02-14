@@ -2,24 +2,29 @@
 set -euo pipefail
 
 # Script to join a new server node as a peer in the K3s multi-server cluster
-# Usage: ./deploy.sh <SERVER_IP> <NODE_TOKEN>
+# Set environment variables before running:
+# export K3S_SERVER_IP=<EXISTING_SERVER_IP>
+# export K3S_TOKEN=<NODE_TOKEN>
+# Then run: ./join-server.sh
 
-if [[ $# -ne 2 ]]; then
-    echo "Usage: $0 <EXISTING_SERVER_IP> <NODE_TOKEN>"
-    echo "Example: $0 192.168.1.100 K107...your-token..."
+if [[ -z "${K3S_SERVER_IP:-}" ]]; then
+    echo "Error: K3S_SERVER_IP environment variable not set."
+    echo "Set it with: export K3S_SERVER_IP=<EXISTING_SERVER_IP>"
     exit 1
 fi
 
-EXISTING_SERVER_IP="$1"
-NODE_TOKEN="$2"
+if [[ -z "${K3S_TOKEN:-}" ]]; then
+    echo "Error: K3S_TOKEN environment variable not set."
+    echo "Set it with: export K3S_TOKEN=<NODE_TOKEN>"
+    exit 1
+fi
 
 echo "Joining K3s multi-server cluster as peer..."
-echo "Existing server IP: $EXISTING_SERVER_IP"
-echo "Node token: ${NODE_TOKEN:0:10}..."
+echo "Existing server IP: $K3S_SERVER_IP"
+echo "Node token: ${K3S_TOKEN:0:10}..."
 
 # Set environment variables for K3s
-export K3S_URL="https://${EXISTING_SERVER_IP}:6443"
-export K3S_TOKEN="$NODE_TOKEN"
+export K3S_URL="https://${K3S_SERVER_IP}:6443"
 
 # Install K3s as server (peer)
 curl -sfL https://get.k3s.io | K3S_URL="$K3S_URL" K3S_TOKEN="$K3S_TOKEN" sh -s - server
