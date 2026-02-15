@@ -19,6 +19,13 @@ build_images() {
         docker buildx build --platform linux/amd64,linux/arm64 -t "${IMAGE_REGISTRY}/task3:${IMAGE_TAG}" --push hello_tx2/
         docker buildx build --platform linux/amd64,linux/arm64 -t "${IMAGE_REGISTRY}/task4:${IMAGE_TAG}" --push hello_rx2/
         echo "Push complete."
+        # Pull locally for import
+        echo "Pulling images locally..."
+        docker pull "${IMAGE_REGISTRY}/task1:${IMAGE_TAG}"
+        docker pull "${IMAGE_REGISTRY}/task2:${IMAGE_TAG}"
+        docker pull "${IMAGE_REGISTRY}/task3:${IMAGE_TAG}"
+        docker pull "${IMAGE_REGISTRY}/task4:${IMAGE_TAG}"
+        echo "Pull complete."
     else
         # Peer: pull from registry
         echo "Pulling images from registry..."
